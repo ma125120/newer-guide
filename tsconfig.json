@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "module": "CommonJS",
+    "target": "ES5",
+    "allowJs": false,
+    "declaration": true,
+    "experimentalDecorators": true,
+    "outDir": "dist",
+    "lib": ["es5", "ES2015", "DOM"]
+  },
+  "include": ["./**/*.ts"]
+}
