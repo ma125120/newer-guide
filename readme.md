@@ -1,3 +1,6 @@
+## 预览地址
+https://ma125120.github.io/newer-guide/index.html
+
 ## 安装
 
 ```
