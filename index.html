@@ -8,7 +8,7 @@
       padding: 8px 12px;
     }
     .mask-el {
-      transition: -webkit-mask .3s ease-in-out;
+      transition: -webkit-mask .3s ease-out;
     }
   </style>
 </head>
@@ -36,114 +36,101 @@
     </header>
   </div>
   <script>
-class NewerGuide {
-  w = window.innerWidth
-  h = window.innerHeight
-  offset = 0
-  elList = []
-  maskContainer = null
-  canvas = null
-  ctx = null
-  rgba = ''
-  maskClass = ''
-  zIndex = 0
-
-  constructor({
-    elList = [],
-    rgba = 'rgba(0, 0, 0, 0.5)',
-    maskClass = 'mask-el',
-    zIndex = 1000,
-  }) {
-    this.elList = elList;
-    this.rgba = rgba;
-    this.maskClass = maskClass;
-    this.zIndex = zIndex;
-
-    this.init()
-  }
-
-  /** 初始化添加 canvas 及 context */
-  init() {
-    const canvas = document.createElement(`canvas`)
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-    this.canvas = canvas
-
-    const ctx = canvas.getContext('2d')
-    this.ctx = ctx
-  }
-
-  /** 进行到下一步的引导 */
-  step  = () => {
-    if (this.offset === 0) {
-      this.startAction()
+var NewerGuide = /** @class */ (function () {
+    function NewerGuide(_a) {
+        var _this = this;
+        var _b = _a.elList, elList = _b === void 0 ? [] : _b, _c = _a.rgba, rgba = _c === void 0 ? 'rgba(0, 0, 0, 0.5)' : _c, _d = _a.maskClass, maskClass = _d === void 0 ? 'mask-el' : _d, _e = _a.zIndex, zIndex = _e === void 0 ? 1000 : _e;
+        this.w = window.innerWidth;
+        this.h = window.innerHeight;
+        this.offset = 0;
+        this.elList = [];
+        this.maskContainer = null;
+        this.canvas = null;
+        this.ctx = null;
+        this.rgba = '';
+        this.maskClass = '';
+        this.zIndex = 0;
+        /** 进行到下一步的引导 */
+        this.step = function () {
+            if (_this.offset === 0) {
+                _this.startAction();
+            }
+            _this.fillRect();
+            _this.offset++;
+            if (_this.offset > _this.elList.length) {
+                _this.endAction();
+            }
+        };
+        /** 在 canvas 上绘制图片，作为 mask 的url */
+        this.fillRect = function () {
+            var _a = _this, w = _a.w, h = _a.h;
+            var selector = _this.elList[_this.offset];
+            var el = document.querySelector(selector);
+            var rect = el === null || el === void 0 ? void 0 : el.getBoundingClientRect();
+            if (!rect)
+                return null;
+            _this.bindEvent();
+            var imageData = _this.ctx.createImageData(w, h);
+            var data = imageData.data;
+            for (var i = 0; i < w; i++) {
+                for (var j = 0; j < h; j++) {
+                    var start = 4 * (j * w + i);
+                    data[start] = data[start + 1] = data[start + 2] = 0;
+                    if (i >= rect.x && i <= (rect.x + rect.width) && j >= rect.y && j <= (rect.y + rect.height)) {
+                        data[start + 3] = 0;
+                    }
+                    else {
+                        data[start + 3] = 255;
+                    }
+                }
+            }
+            _this.ctx.putImageData(imageData, 0, 0);
+            _this.setMask(_this.maskContainer, _this.canvas.toDataURL());
+        };
+        this.elList = elList;
+        this.rgba = rgba;
+        this.maskClass = maskClass;
+        this.zIndex = zIndex;
+        this.init();
     }
-    this.fillRect()
-    this.offset++
-
-    if (this.offset > this.elList.length) {
-      this.endAction()
-    }
-  }
-  /** 引导开始时，在顶层添加 mask 遮罩 */
-  startAction() {
-    const mask = document.createElement(`div`)
-    const maskId = `asd` + Date.now()
-    mask.innerHTML = `<div id="${maskId}" class="${this.maskClass}" style="position: fixed;top: 0; left: 0; right: 0; bottom: 0; z-index: ${this.zIndex}; background: ${this.rgba};pointer-events: none;"></div>`
-    const maskContainer = mask.querySelector(`#${maskId}`)
-    document.body.appendChild(maskContainer)
-    this.maskContainer = maskContainer
-  }
-
-  /** 引导结束，销毁 mask  */
-  endAction() {
-    this.destory()
-  }
-  destory() {
-    this.maskContainer.remove()
-  }
-
-  /** 在 canvas 上绘制图片，作为 mask 的url */
-  fillRect = () => {
-    const { w, h, } = this
-    const selector = this.elList[this.offset]
-    const el = document.querySelector(selector)
-    const rect = el?.getBoundingClientRect()
-    
-    if (!rect) return null;
-    this.bindEvent()
-
-    const imageData = this.ctx.createImageData(w, h)
-    const data = imageData.data
-
-    for (let i = 0; i < w; i++) {
-      for (let j = 0; j < h; j++) {
-        const start = 4 * (j * w + i) 
-
-        data[start] = data[start + 1] = data[start + 2] = 0
-        if (i >= rect.x && i <= (rect.x + rect.width) && j >= rect.y && j <= (rect.y + rect.height)) {
-          data[start + 3] = 0
-        } else {
-          data[start + 3] = 255
-        }
-      }
-    }
-
-    this.ctx.putImageData(imageData, 0, 0)
-    this.setMask(this.maskContainer, this.canvas.toDataURL())
-  }
-  bindEvent() {
-    const { elList, offset, } = this
-    document.querySelector(elList[offset]).addEventListener(`click`, this.step)
-    document.querySelector(elList[offset - 1])?.removeEventListener(`click`, this.step)
-  }
-
-  setMask (el, src) {
-    const { w, h } = this
-    el.style.webkitMask = `url(${src}) 0 0 / ${w}px ${h}px`
-    el.style.mask = `url(${src}) 0 0 / ${w}px ${h}px`
-  }
-}
+    /** 初始化添加 canvas 及 context */
+    NewerGuide.prototype.init = function () {
+        var canvas = document.createElement("canvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        this.canvas = canvas;
+        var ctx = canvas.getContext('2d');
+        this.ctx = ctx;
+    };
+    /** 引导开始时，在顶层添加 mask 遮罩 */
+    NewerGuide.prototype.startAction = function () {
+        var mask = document.createElement("div");
+        var maskId = "asd" + Date.now();
+        mask.innerHTML = "<div id=\"" + maskId + "\" class=\"" + this.maskClass + "\" style=\"position: fixed;top: 0; left: 0; right: 0; bottom: 0; z-index: " + this.zIndex + "; background: " + this.rgba + ";pointer-events: none;\"></div>";
+        var maskContainer = mask.querySelector("#" + maskId);
+        document.body.appendChild(maskContainer);
+        this.maskContainer = maskContainer;
+    };
+    /** 引导结束，销毁 mask  */
+    NewerGuide.prototype.endAction = function () {
+        this.destory();
+    };
+    NewerGuide.prototype.destory = function () {
+        this.maskContainer.remove();
+    };
+    NewerGuide.prototype.bindEvent = function () {
+        var _a;
+        var _b = this, elList = _b.elList, offset = _b.offset;
+        document.querySelector(elList[offset]).addEventListener("click", this.step);
+        (_a = document.querySelector(elList[offset - 1])) === null || _a === void 0 ? void 0 : _a.removeEventListener("click", this.step);
+    };
+    NewerGuide.prototype.setMask = function (el, src) {
+        var _a = this, w = _a.w, h = _a.h;
+        el.style.webkitMask = "url(" + src + ") 0 0 / " + w + "px " + h + "px";
+        el.style.mask = "url(" + src + ") 0 0 / " + w + "px " + h + "px";
+    };
+    return NewerGuide;
+}());
 
 new NewerGuide({
   elList: [`.step1`, `.step2`, `.step3`]
